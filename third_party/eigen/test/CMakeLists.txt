@@ -435,7 +435,6 @@ if(CUDA_FOUND AND EIGEN_TEST_CUDA)
   endif()
 
   set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
-  set(CUDA_NVCC_FLAGS  "--expt-relaxed-constexpr -Xcudafe \"--display_error_number\" ${NVCC_ARCH_FLAGS} ${CUDA_NVCC_FLAGS} ${EIGEN_CUDA_CXX_FLAGS}")
   ei_add_test(gpu_example)
   ei_add_test(gpu_basic)
 
