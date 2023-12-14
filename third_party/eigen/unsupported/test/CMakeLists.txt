@@ -248,6 +248,7 @@ if(CUDA_FOUND AND EIGEN_TEST_CUDA)
     foreach(ARCH IN LISTS EIGEN_CUDA_COMPUTE_ARCH)
       string(APPEND NVCC_ARCH_FLAGS " -gencode arch=compute_${ARCH},code=sm_${ARCH}")
     endforeach()
+    set(CUDA_NVCC_FLAGS  "--expt-relaxed-constexpr -Xcudafe \"--display_error_number\" ${NVCC_ARCH_FLAGS} ${CUDA_NVCC_FLAGS} ${EIGEN_CUDA_CXX_FLAGS}")
     cuda_include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CUDA_TOOLKIT_ROOT_DIR}/include")
   endif()
   

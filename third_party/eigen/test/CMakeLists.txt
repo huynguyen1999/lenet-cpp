@@ -408,7 +408,7 @@ if(CUDA_FOUND AND EIGEN_TEST_CUDA)
   string(REPLACE "-Wundef" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   string(REPLACE "-Wnon-virtual-dtor" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   string(REPLACE "-fno-check-new" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  
+
   if(EIGEN_TEST_CUDA_CLANG)
     string(APPEND CMAKE_CXX_FLAGS " --cuda-path=${CUDA_TOOLKIT_ROOT_DIR}")
     foreach(GPU IN LISTS EIGEN_CUDA_COMPUTE_ARCH)
@@ -431,10 +431,12 @@ if(CUDA_FOUND AND EIGEN_TEST_CUDA)
     foreach(ARCH IN LISTS EIGEN_CUDA_COMPUTE_ARCH)
       string(APPEND NVCC_ARCH_FLAGS " -gencode arch=compute_${ARCH},code=sm_${ARCH}")
     endforeach()
+    set(CUDA_NVCC_FLAGS  "--expt-relaxed-constexpr -Xcudafe \"--display_error_number\" ${NVCC_ARCH_FLAGS} ${CUDA_NVCC_FLAGS} ${EIGEN_CUDA_CXX_FLAGS}")
     cuda_include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CUDA_TOOLKIT_ROOT_DIR}/include")
   endif()
 
   set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
+
   ei_add_test(gpu_example)
   ei_add_test(gpu_basic)
 
