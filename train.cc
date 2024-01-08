@@ -102,7 +102,7 @@ int main()
 		std::cout << epoch + 1 << "-th epoch, test acc: " << acc << std::endl;
 		std::cout << std::endl;
 	}
-	dnn.save_model("./model/fashion_weights.bin");
-	dnn.load_model("./model/fashion_weights.bin");
+	dnn.save_model("fashion_weights.bin");
+	dnn.load_model("fashion_weights.bin");
 	return 0;
 }
