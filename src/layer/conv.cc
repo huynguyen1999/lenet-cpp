@@ -57,8 +57,6 @@ void Conv::forward(const Matrix &bottom)
   int n_sample = bottom.cols();
   top.resize(height_out * width_out * channel_out, n_sample);
   data_cols.resize(n_sample);
-  GpuTimer timer;
-  timer.Start();
   for (int i = 0; i < n_sample; i++)
   {
     // im2col
@@ -70,7 +68,6 @@ void Conv::forward(const Matrix &bottom)
     result.rowwise() += bias.transpose();
     top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
   }
-  timer.Stop();
   float duration_layer = timer.Elapsed();
   std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
 }
