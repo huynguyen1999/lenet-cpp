@@ -90,6 +90,7 @@ int main()
 			{
 				std::cout << ith_batch << "-th batch, loss: " << dnn.get_loss()
 						  << std::endl;
+				break;
 			}
 			// optimize
 			dnn.update(opt);
