@@ -128,11 +128,6 @@ void Network::check_gradient(const Matrix &input, const Matrix &target,
 void Network::save_model(std::string filename)
 {
   std::ofstream out(filename, std::ios::out | std::ios::binary);
-  if (!out.is_open())
-  {
-    std::cerr << "Error opening file for writing: " << filename << std::endl;
-    return;
-  }
 
   int n_layer = layers.size();
   out.write(reinterpret_cast<char *>(&n_layer), sizeof(int));
