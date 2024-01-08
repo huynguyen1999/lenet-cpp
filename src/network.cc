@@ -138,9 +138,9 @@ void Network::save_model(std::string filename)
     int layer_p_size = layer_params.size();
     out.write(reinterpret_cast<char *>(&layer_p_size), sizeof(int));
 
-    for (int j = 0; j < layer_p_size; j++)
+    if (layer_p_size > 0)
     {
-      out.write(reinterpret_cast<char *>(&layer_params[j]), sizeof(float));
+      out.write(reinterpret_cast<char *>(layer_params.data()), layer_p_size * sizeof(float));
     }
   }
 
@@ -167,14 +167,11 @@ void Network::load_model(std::string filename)
     int layer_size;
     in.read(reinterpret_cast<char *>(&layer_size), sizeof(int));
 
-    std::vector<float> layer_params;
-    layer_params.reserve(layer_size);
+    std::vector<float> layer_params(layer_size);
 
-    for (int j = 0; j < layer_size; j++)
+    if (layer_size > 0)
     {
-      float param;
-      in.read(reinterpret_cast<char *>(&param), sizeof(float));
-      layer_params.push_back(param);
+      in.read(reinterpret_cast<char *>(layer_params.data()), layer_size * sizeof(float));
     }
 
     res.push_back(layer_params);

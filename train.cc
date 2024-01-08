@@ -103,5 +103,6 @@ int main()
 		std::cout << std::endl;
 	}
 	dnn.save_model("./model/fashion_weights.bin");
+	dnn.load_model("./model/fashion_weights.bin");
 	return 0;
 }
