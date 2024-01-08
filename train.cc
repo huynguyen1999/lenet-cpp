@@ -69,7 +69,6 @@ int main()
 	const int batch_size = 256;
 	for (int epoch = 0; epoch < n_epoch; epoch++)
 	{
-		dnn.save_model("./model/fashion_weights.bin");
 		shuffle_data(dataset.train_data, dataset.train_labels);
 		for (int start_idx = 0; start_idx < n_train; start_idx += batch_size)
 		{

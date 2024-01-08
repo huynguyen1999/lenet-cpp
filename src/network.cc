@@ -127,21 +127,20 @@ void Network::check_gradient(const Matrix &input, const Matrix &target,
 
 void Network::save_model(std::string filename)
 {
-  std::ofstream out;
-  out.open(filename, std::ios::out | std::ios::binary);
+  std::ofstream out(filename, std::ios::out | std::ios::binary);
+  if (!out.is_open())
+  {
+    std::cerr << "Error opening file for writing: " << filename << std::endl;
+    return;
+  }
 
   int n_layer = layers.size();
   out.write(reinterpret_cast<char *>(&n_layer), sizeof(int));
-  std::cout << "Num Layers: " << n_layer << std::endl;
-  std::vector<std::vector<float>> res;
-  res.reserve(n_layer);
 
   for (int i = 0; i < n_layer; i++)
   {
     std::vector<float> layer_params = layers[i]->get_parameters();
     int layer_p_size = layer_params.size();
-    if (layer_p_size > 0)
-      std::cout << "Layer " << i << " size: " << layer_p_size << std::endl;
     out.write(reinterpret_cast<char *>(&layer_p_size), sizeof(int));
 
     for (int j = 0; j < layer_p_size; j++)
@@ -149,35 +148,44 @@ void Network::save_model(std::string filename)
       out.write(reinterpret_cast<char *>(&layer_params[j]), sizeof(float));
     }
   }
+
+  out.close();
 }
 
 void Network::load_model(std::string filename)
 {
-  std::ifstream in;
-  in.open(filename, std::ios::in | std::ios::binary);
-  std::vector<std::vector<float>> res;
+  std::ifstream in(filename, std::ios::in | std::ios::binary);
+  if (!in.is_open())
+  {
+    std::cerr << "Error opening file for reading: " << filename << std::endl;
+    return;
+  }
 
   int n_layer;
-  int layer_size = 0;
-
   in.read(reinterpret_cast<char *>(&n_layer), sizeof(int));
-  // std::cout<<"Num Layers: "<<n_layer<<std::endl;
+
+  std::vector<std::vector<float>> res;
   res.reserve(n_layer);
 
   for (int i = 0; i < n_layer; i++)
   {
+    int layer_size;
     in.read(reinterpret_cast<char *>(&layer_size), sizeof(int));
-    // std::cout<<"Layer "<<i<<" size: "<<layer_size<<std::endl;
+
     std::vector<float> layer_params;
     layer_params.reserve(layer_size);
+
     for (int j = 0; j < layer_size; j++)
     {
-      float param = 0;
+      float param;
       in.read(reinterpret_cast<char *>(&param), sizeof(float));
       layer_params.push_back(param);
     }
+
     res.push_back(layer_params);
   }
+
+  in.close();
 
   set_parameters(res);
 }
