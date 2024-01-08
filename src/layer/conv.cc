@@ -68,8 +68,6 @@ void Conv::forward(const Matrix &bottom)
     result.rowwise() += bias.transpose();
     top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
   }
-  float duration_layer = timer.Elapsed();
-  std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
 }
 
 void Conv::col2im(const Matrix &data_col, Vector &image)
