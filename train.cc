@@ -63,10 +63,10 @@ int main()
 	Loss *loss = new CrossEntropy;
 	dnn.add_loss(loss);
 	// train & test
-	SGD opt(0.001, 5e-4, 0.9, true);
+	SGD opt(0.01, 5e-3, 0.9, true);
 	// SGD opt(0.001);
-	const int n_epoch = 7;
-	const int batch_size = 128;
+	const int n_epoch = 1;
+	const int batch_size = 256;
 	for (int epoch = 0; epoch < n_epoch; epoch++)
 	{
 		dnn.save_model("./model/fashion_weights.bin");
@@ -87,7 +87,7 @@ int main()
 			dnn.forward(x_batch);
 			dnn.backward(x_batch, target_batch);
 			// display
-			if (ith_batch % 50 == 0)
+			if (ith_batch % 10 == 0)
 			{
 				std::cout << ith_batch << "-th batch, loss: " << dnn.get_loss()
 						  << std::endl;
