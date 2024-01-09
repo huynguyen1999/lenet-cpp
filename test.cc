@@ -40,19 +40,19 @@ int main(int argc, char *argv[])
         cnn_version = 1;
         std::cout << "Selected CNN Type: Basic GPU" << std::endl;
     }
-    else if (std::strcmp(version, "optimize1") == 0)
+    else if (std::strcmp(version, "sm_gpu") == 0)
     {
         cnn_version = 2;
         std::cout << "Selected CNN Type: Optimized GPU With Shared Memory " << std::endl;
     }
-    else if (std::strcmp(version, "optimize2") == 0)
+    else if (std::strcmp(version, "cm_gpu") == 0)
     {
         cnn_version = 3;
         std::cout << "Selected CNN Type: Optimized GPU With Constant Memory" << std::endl;
     }
     else
     {
-        std::cerr << "Invalid CNN Type. Supported types: cpu, gpu, optimize1, optimize2" << std::endl;
+        std::cerr << "Invalid CNN Type. Supported types: cpu, gpu, sm_gpu, cm_gpu" << std::endl;
         return 1;
     }
 

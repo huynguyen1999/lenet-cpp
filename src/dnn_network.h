@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <iostream>
 #include <cstdlib>
+#include "./layer/conv_cm_gpu.h"
+#include "./layer/conv_sm_gpu.h"
 #include "./layer/conv_gpu.h"
 #include "./layer/conv.h"
 #include "./layer.h"
@@ -34,8 +36,12 @@ Network DnnNetwork(int cnn_version)
         conv2 = new ConvGpu(6, 12, 12, 16, 5, 5);
         break;
     case 2:
+        conv1 = new ConvSmGpu(1, 28, 28, 6, 5, 5);
+        conv2 = new ConvSmGpu(6, 12, 12, 16, 5, 5);
         break;
     case 3:
+        conv1 = new ConvCmGpu(1, 28, 28, 6, 5, 5);
+        conv2 = new ConvCmGpu(6, 12, 12, 16, 5, 5);
         break;
     }
     Layer *pool1 = new MaxPooling(6, 24, 24, 2, 2, 2);
