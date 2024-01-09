@@ -48,9 +48,9 @@ public:
     }
 
     void forward(const Matrix &bottom);
-    void conv_forward_gpu(float *host_y, const float *host_x, const float *host_k,
-                          const int B, const int M, const int C,
-                          const int H, const int W, const int K);
+    void perform_convolution_gpu(float *output, const float *input, const float *filter,
+                                 const int num_samples, const int num_output_channels, const int num_input_channels,
+                                 const int input_height, const int input_width, const int filter_size);
     void backward(const Matrix &bottom, const Matrix &grad_top);
     void update(Optimizer &opt);
     void im2col(const Vector &image, Matrix &data_col);

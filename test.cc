@@ -20,8 +20,42 @@
 #include "src/optimizer/sgd.h"
 #include "src/dnn_network.h"
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc != 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <CNN_Type>" << std::endl;
+        return 1;
+    }
+    // 0. Get CNN version
+    const char *version = argv[1];
+    int cnn_version = -1;
+    if (std::strcmp(cnn_version, "cpu") == 0)
+    {
+        cnn_version = 0;
+        std::cout << "Selected CNN Type: CPU" << std::endl;
+    }
+    else if (std::strcmp(cnn_version, "gpu") == 0)
+    {
+        cnn_version = 1;
+        std::cout << "Selected CNN Type: Basic GPU" << std::endl;
+    }
+    else if (std::strcmp(cnn_version, "optimize1") == 0)
+    {
+        cnn_version = 2;
+        std::cout << "Selected CNN Type: Optimized GPU With Shared Memory " << std::endl;
+    }
+    else if (std::strcmp(cnn_version, "optimize2") == 0)
+    {
+        cnn_version = 3;
+        std::cout << "Selected CNN Type: Optimized GPU With Constant Memory" << std::endl;
+    }
+    else
+    {
+        std::cerr << "Invalid CNN Type. Supported types: cpu, gpu, optimize1, optimize2" << std::endl;
+        return 1;
+    }
+
     // 1. Load data
     MNIST dataset("../data/fashion-mnist/");
     dataset.read();
@@ -32,21 +66,7 @@ int main()
 
     float accuracy = 0.0;
     std::cout << "==============================" << std::endl;
-
-    // 2. Host - CPU Network
-    // std::cout << "Test: Host - CPU Network" << std::endl;
-    // Network dnn1 = CpuDnnNetwork();
-    // dnn1.load_weights("../weights/fashion_weights.bin");
-    // dnn1.forward(dataset.test_data);
-    // accuracy = compute_accuracy(dnn1.output(), dataset.test_labels);
-    // std::cout << "test accuracy: " << accuracy << std::endl;
-    // std::cout << "==============================" << std::endl;
-    // 3. Device - GPU Network
-    std::cout << "Test: Host - GPU Network" << std::endl;
-    Network dnn2 = GpuDnnNetwork();
-    dnn2.load_weights("../weights/fashion_weights.bin");
-    dnn2.forward(dataset.test_data);
-    accuracy = compute_accuracy(dnn2.output(), dataset.test_labels);
+    accuracy = compute_accuracy(dnn.output(), dataset.test_labels);
     std::cout << "test accuracy: " << accuracy << std::endl;
 
     return 0;
