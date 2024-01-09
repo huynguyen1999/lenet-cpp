@@ -44,7 +44,7 @@ int main()
 
     // 3. Device - GPU Network
     Network dnn2 = GpuDnnNetwork();
-    dnn2.load_weights("../weights/fashion_weights.bin.bin");
+    dnn2.load_weights("../weights/fashion_weights.bin");
     dnn2.forward(dataset.test_data);
     accuracy = compute_accuracy(dnn2.output(), dataset.test_labels);
     std::cout << "test accuracy: " << accuracy << std::endl;
