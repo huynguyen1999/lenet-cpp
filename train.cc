@@ -65,8 +65,8 @@ int main()
 	// train & test
 	SGD opt(0.01, 5e-3, 0.9, true);
 	// SGD opt(0.001);
-	const int n_epoch = 1;
-	const int batch_size = 256;
+	const int n_epoch = 7;
+	const int batch_size = 128;
 	for (int epoch = 0; epoch < n_epoch; epoch++)
 	{
 		shuffle_data(dataset.train_data, dataset.train_labels);
@@ -90,7 +90,6 @@ int main()
 			{
 				std::cout << ith_batch << "-th batch, loss: " << dnn.get_loss()
 						  << std::endl;
-				break;
 			}
 			// optimize
 			dnn.update(opt);
@@ -103,6 +102,5 @@ int main()
 		std::cout << std::endl;
 	}
 	dnn.save_weights("../weights/fashion_weights.bin");
-	dnn.load_weights("../weights/fashion_weights.bin");
 	return 0;
 }
