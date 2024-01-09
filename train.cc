@@ -86,7 +86,7 @@ int main()
 			dnn.forward(x_batch);
 			dnn.backward(x_batch, target_batch);
 			// display
-			if (ith_batch % 10 == 0)
+			if (ith_batch % 20 == 0)
 			{
 				std::cout << ith_batch << "-th batch, loss: " << dnn.get_loss()
 						  << std::endl;
