@@ -23,7 +23,7 @@
 
 Network DnnNetwork(int cnn_version)
 {
-    Network dnn2;
+    Network dnn;
     // create conv based on cnn version
     Layer *conv1, *conv2;
     switch (cnn_version)
@@ -55,22 +55,22 @@ Network DnnNetwork(int cnn_version)
     Layer *relu_fc1 = new ReLU;
     Layer *relu_fc2 = new ReLU;
     Layer *softmax = new Softmax;
-    dnn2.add_layer(conv1);
-    dnn2.add_layer(relu_conv1);
-    dnn2.add_layer(pool1);
-    dnn2.add_layer(conv2);
-    dnn2.add_layer(relu_conv2);
-    dnn2.add_layer(pool2);
-    dnn2.add_layer(fc1);
-    dnn2.add_layer(relu_fc1);
-    dnn2.add_layer(fc2);
-    dnn2.add_layer(relu_fc2);
-    dnn2.add_layer(fc3);
-    dnn2.add_layer(softmax);
+    dnn.add_layer(conv1);
+    dnn.add_layer(relu_conv1);
+    dnn.add_layer(pool1);
+    dnn.add_layer(conv2);
+    dnn.add_layer(relu_conv2);
+    dnn.add_layer(pool2);
+    dnn.add_layer(fc1);
+    dnn.add_layer(relu_fc1);
+    dnn.add_layer(fc2);
+    dnn.add_layer(relu_fc2);
+    dnn.add_layer(fc3);
+    dnn.add_layer(softmax);
 
     // loss
     Loss *loss = new CrossEntropy;
-    dnn2.add_loss(loss);
+    dnn.add_loss(loss);
 
-    return dnn2;
+    return dnn;
 }

@@ -208,7 +208,6 @@ void ConvGpu::backward(const Matrix &bottom, const Matrix &grad_top)
     grad_bottom.setZero();
     for (int i = 0; i < n_sample; i++)
     {
-
         // Forward no longer needs the next 3 rows
         Matrix data_col;
         im2col(bottom.col(i), data_col);

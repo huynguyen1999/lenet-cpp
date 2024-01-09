@@ -20,12 +20,12 @@ void ConvSmGpu::init()
     set_normal_random(bias.data(), bias.size(), 0, 0.01);
 }
 
-__global__ void sm_convolution_kernel(float *output, const float *input, const float *kernel,
-                                      const int num_samples, const int output_channel, const int input_channel,
-                                      const int height, const int width, const int kernel_size)
+__global__ void sm_convolution_kernel(float *result, const float *input, const float *kernel,
+                                      const int num_samples, const int num_output_channels, const int num_input_channels,
+                                      const int input_height, const int input_width, const int filter_size)
 {
     int TILE_WIDTH_SHARED;
-    if (input_channel == 1)
+    if (num_input_channels == 1)
     {
         TILE_WIDTH_SHARED = TILE_WIDTH_SHARED_C1;
     }
@@ -36,55 +36,57 @@ __global__ void sm_convolution_kernel(float *output, const float *input, const f
 
     extern __shared__ float shared_input[];
 
-    const int H_out = height - kernel_size + 1;
-    const int W_out = width - kernel_size + 1;
+    const int output_height = input_height - filter_size + 1;
+    const int output_width = input_width - filter_size + 1;
 
-    int W_grid = ceil(1.0 * W_out / TILE_WIDTH_SHARED);
+    int W_grid = ceil(1.0 * output_width / TILE_WIDTH_SHARED);
 
-    int b = blockIdx.x;   // batch number
-    int m = blockIdx.y;   // output feature
-    int ty = threadIdx.y; // thread ID in the current TILE
-    int tx = threadIdx.x;
+    int batch_idx = blockIdx.x;          // batch number
+    int output_feature_idx = blockIdx.y; // output feature
+    int thread_y = threadIdx.y;          // thread ID in the current TILE
+    int thread_x = threadIdx.x;
 
-    int h = (blockIdx.z / W_grid) * TILE_WIDTH_SHARED + ty; // row of the input image matrix
-    int w = (blockIdx.z % W_grid) * TILE_WIDTH_SHARED + tx; // col of the input image matrix
+    int row_idx = (blockIdx.z / W_grid) * TILE_WIDTH_SHARED + thread_y; // row of the input image matrix
+    int col_idx = (blockIdx.z % W_grid) * TILE_WIDTH_SHARED + thread_x; // col of the input image matrix
 
-    int startOfTile_h = (blockIdx.z / W_grid) * TILE_WIDTH_SHARED; // row of the input image matrix
-    int startOfTile_w = (blockIdx.z % W_grid) * TILE_WIDTH_SHARED; // col of the input image matrix
-    for (int c = 0; c < input_channel; c++)
+    int start_of_tile_row = (blockIdx.z / W_grid) * TILE_WIDTH_SHARED; // row of the input image matrix
+    int start_of_tile_col = (blockIdx.z % W_grid) * TILE_WIDTH_SHARED; // col of the input image matrix
+
+    for (int channel_idx = 0; channel_idx < num_input_channels; channel_idx++)
     {
-        for (int i = ty; i < TILE_WIDTH_SHARED + kernel_size - 1; i += TILE_WIDTH_SHARED)
+        for (int i = thread_y; i < TILE_WIDTH_SHARED + filter_size - 1; i += TILE_WIDTH_SHARED)
         {
-            for (int j = tx; j < TILE_WIDTH_SHARED + kernel_size - 1; j += TILE_WIDTH_SHARED)
+            for (int j = thread_x; j < TILE_WIDTH_SHARED + filter_size - 1; j += TILE_WIDTH_SHARED)
             {
-                if (startOfTile_h + i < height && startOfTile_w + j < width)
+                if (start_of_tile_row + i < input_height && start_of_tile_col + j < input_width)
                 {
-                    shared_input[c * (TILE_WIDTH_SHARED + kernel_size - 1) * (TILE_WIDTH_SHARED + kernel_size - 1) + i * (TILE_WIDTH_SHARED + kernel_size - 1) + j] = input[b * (input_channel * height * width) + c * (height * width) + (startOfTile_h + i) * width + startOfTile_w + j];
+                    shared_input[channel_idx * (TILE_WIDTH_SHARED + filter_size - 1) * (TILE_WIDTH_SHARED + filter_size - 1) + i * (TILE_WIDTH_SHARED + filter_size - 1) + j] =
+                        input[batch_idx * (num_input_channels * input_height * input_width) + channel_idx * (input_height * input_width) + (start_of_tile_row + i) * input_width + start_of_tile_col + j];
                 }
             }
         }
     }
     __syncthreads();
 
-    if ((h < H_out) && (w < W_out))
+    if ((row_idx < output_height) && (col_idx < output_width))
     {
         float accum = 0.0f;
-        for (int c = 0; c < input_channel; c++) // sum over all input features
+        for (int channel_idx = 0; channel_idx < num_input_channels; channel_idx++) // sum over all input features
         {
-            for (int p = 0; p < kernel_size; p++) // KxK filter
-                for (int q = 0; q < kernel_size; q++)
-                    accum += shared_input[c * (TILE_WIDTH_SHARED + kernel_size - 1) * (TILE_WIDTH_SHARED + kernel_size - 1) + (p + ty) * (TILE_WIDTH_SHARED + kernel_size - 1) + (q + tx)] * kernel[m * (input_channel * kernel_size * kernel_size) + c * (kernel_size * kernel_size) + p * kernel_size + q];
+            for (int p = 0; p < filter_size; p++) // filter_size x filter_size filter
+                for (int q = 0; q < filter_size; q++)
+                    accum += shared_input[channel_idx * (TILE_WIDTH_SHARED + filter_size - 1) * (TILE_WIDTH_SHARED + filter_size - 1) + (p + thread_y) * (TILE_WIDTH_SHARED + filter_size - 1) + (q + thread_x)] * kernel[output_feature_idx * (num_input_channels * filter_size * filter_size) + channel_idx * (filter_size * filter_size) + p * filter_size + q];
         }
-        output[b * (output_channel * H_out * W_out) + m * (H_out * W_out) + h * W_out + w] = accum;
+        result[batch_idx * (num_output_channels * output_height * output_width) + output_feature_idx * (output_height * output_width) + row_idx * output_width + col_idx] = accum;
     }
 }
 
-void ConvSmGpu::perform_convolution_gpu(float *output_data, const float *input_data, const float *weight_data,
-                                        const int num_samples, const int output_channel, const int input_channel,
-                                        const int height_in, const int width_in, const int kernel_height)
+void ConvSmGpu::perform_convolution_gpu(float *output, const float *input, const float *filter,
+                                        const int num_samples, const int num_output_channels, const int num_input_channels,
+                                        const int input_height, const int input_width, const int filter_size)
 {
     int TILE_WIDTH_SHARED;
-    if (input_channel == 1)
+    if (num_input_channels == 1)
     {
         TILE_WIDTH_SHARED = TILE_WIDTH_SHARED_C1;
     }
@@ -93,39 +95,39 @@ void ConvSmGpu::perform_convolution_gpu(float *output_data, const float *input_d
         TILE_WIDTH_SHARED = TILE_WIDTH_SHARED_C3;
     }
 
-    const int H_out = height_in - kernel_height + 1;
-    const int W_out = width_in - kernel_height + 1;
+    const int output_height = input_height - filter_size + 1;
+    const int output_width = input_width - filter_size + 1;
 
-    int inputSize = num_samples * input_channel * height_in * width_in * sizeof(float);
-    int outputSize = num_samples * output_channel * H_out * W_out * sizeof(float);
+    int input_size = num_samples * num_input_channels * input_height * input_width * sizeof(float);
+    int output_size = num_samples * num_output_channels * output_height * output_width * sizeof(float);
 
-    float *device_input, *device_output, *device_weight;
+    float *device_input, *device_output, *device_filter;
 
-    CHECK(cudaMalloc((void **)&device_input, inputSize));
-    CHECK(cudaMalloc((void **)&device_output, outputSize));
-    CHECK(cudaMalloc((void **)&device_weight, output_channel * input_channel * kernel_height * kernel_height * sizeof(float)));
+    CHECK(cudaMalloc((void **)&device_input, input_size));
+    CHECK(cudaMalloc((void **)&device_output, output_size));
+    CHECK(cudaMalloc((void **)&device_filter, num_output_channels * num_input_channels * filter_size * filter_size * sizeof(float)));
 
-    CHECK(cudaMemcpy(device_input, input_data, inputSize, cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(device_weight, weight_data, output_channel * input_channel * kernel_height * kernel_height * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(device_input, input, input_size, cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(device_filter, filter, num_output_channels * num_input_channels * filter_size * filter_size * sizeof(float), cudaMemcpyHostToDevice));
 
-    dim3 numThreadsPerBlock, numBlocksInGrid;
+    dim3 num_threads_per_block, num_blocks_in_grid;
 
-    numThreadsPerBlock = dim3(TILE_WIDTH_SHARED, TILE_WIDTH_SHARED, 1);
-    int shmem_size = input_channel * (TILE_WIDTH_SHARED + kernel_height - 1) * (TILE_WIDTH_SHARED + kernel_height - 1) * sizeof(float);
-    numBlocksInGrid = dim3(num_samples, output_channel, ceil(1.0 * H_out / TILE_WIDTH_SHARED) * ceil(1.0 * W_out / TILE_WIDTH_SHARED));
+    num_threads_per_block = dim3(TILE_WIDTH_SHARED, TILE_WIDTH_SHARED, 1);
+    int shmem_size = num_input_channels * (TILE_WIDTH_SHARED + filter_size - 1) * (TILE_WIDTH_SHARED + filter_size - 1) * sizeof(float);
+    num_blocks_in_grid = dim3(num_samples, num_output_channels, ceil(1.0 * output_height / TILE_WIDTH_SHARED) * ceil(1.0 * output_width / TILE_WIDTH_SHARED));
 
     // Launch kernel
     GpuTimer timer;
     timer.Start();
-    sm_convolution_kernel<<<numBlocksInGrid, numThreadsPerBlock, shmem_size>>>(device_output, device_input, device_weight, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
+    sm_convolution_kernel<<<num_blocks_in_grid, num_threads_per_block, shmem_size>>>(device_output, device_input, device_filter, num_samples, num_output_channels, num_input_channels, input_height, input_width, filter_size);
     timer.Stop();
     std::cout << "\t- Kernel time: " << timer.Elapsed() << " ms" << std::endl;
 
-    CHECK(cudaMemcpy(output_data, device_output, outputSize, cudaMemcpyDeviceToHost));
+    CHECK(cudaMemcpy(output, device_output, output_size, cudaMemcpyDeviceToHost));
 
     CHECK(cudaFree(device_input));
     CHECK(cudaFree(device_output));
-    CHECK(cudaFree(device_weight));
+    CHECK(cudaFree(device_filter));
 }
 
 void ConvSmGpu::forward(const Matrix &bottom)

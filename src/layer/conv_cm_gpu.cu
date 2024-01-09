@@ -20,80 +20,80 @@ void ConvCmGpu::init()
     set_normal_random(bias.data(), bias.size(), 0, 0.01);
 }
 
-__global__ void cm_convolution_kernel(float *output, const float *input, const int num_samples,
-                                      const int output_channel, const int input_channel,
-                                      const int height, const int width, const int kernel_size)
+__global__ void cm_convolution_kernel(float *result, const float *input, const int num_samples,
+                                      const int num_output_channels, const int num_input_channels,
+                                      const int input_height, const int input_width, const int filter_size)
 {
-    const int height_out = height - kernel_size + 1;
-    const int width_out = width - kernel_size + 1;
+    const int output_height = input_height - filter_size + 1;
+    const int output_width = input_width - filter_size + 1;
 
-    int width_grid = ceil(1.0 * width_out / TILE_WIDTH);
+    int width_grid = ceil(1.0 * output_width / TILE_WIDTH);
 
     int batch_idx = blockIdx.x;                                         // batch number
     int output_feature_idx = blockIdx.y;                                // output feature
     int row_idx = (blockIdx.z / width_grid) * TILE_WIDTH + threadIdx.y; // row of the image matrix
     int col_idx = (blockIdx.z % width_grid) * TILE_WIDTH + threadIdx.x; // col of the image matrix
 
-    float accumulator = 0.0f;
+    float result_value = 0.0f;
 
-    if (row_idx < height_out && col_idx < width_out)
+    if (row_idx < output_height && col_idx < output_width)
     {
-        for (int input_channel_idx = 0; input_channel_idx < input_channel; input_channel_idx++) // sum over all input features
+        for (int in_channel_idx = 0; in_channel_idx < num_input_channels; in_channel_idx++) // sum over all input features
         {
-            for (int kernel_row = 0; kernel_row < kernel_size; kernel_row++) // kernel_size x kernel_size filter
+            for (int k_row = 0; k_row < filter_size; k_row++) // filter_size x filter_size filter
             {
-                for (int kernel_col = 0; kernel_col < kernel_size; kernel_col++)
+                for (int k_col = 0; k_col < filter_size; k_col++)
                 {
-                    int input_row = row_idx + kernel_row;
-                    int input_col = col_idx + kernel_col;
-                    accumulator += input[(batch_idx * (input_channel * height * width)) +
-                                         (input_channel_idx * (height * width)) +
-                                         (input_row * width) +
-                                         input_col] *
-                                   dc_filter[(output_feature_idx * (input_channel * kernel_size * kernel_size)) +
-                                             (input_channel_idx * (kernel_size * kernel_size)) +
-                                             (kernel_row * kernel_size) +
-                                             kernel_col];
+                    int in_row = row_idx + k_row;
+                    int in_col = col_idx + k_col;
+                    result_value += input[(batch_idx * (num_input_channels * input_height * input_width)) +
+                                          (in_channel_idx * (input_height * input_width)) +
+                                          (in_row * input_width) +
+                                          in_col] *
+                                    dc_filter[(output_feature_idx * (num_input_channels * filter_size * filter_size)) +
+                                              (in_channel_idx * (filter_size * filter_size)) +
+                                              (k_row * filter_size) +
+                                              k_col];
                 }
             }
         }
-        output[(batch_idx * (output_channel * height_out * width_out)) +
-               (output_feature_idx * (height_out * width_out)) +
-               (row_idx * width_out) +
-               col_idx] = accumulator;
+        result[(batch_idx * (num_output_channels * output_height * output_width)) +
+               (output_feature_idx * (output_height * output_width)) +
+               (row_idx * output_width) +
+               col_idx] = result_value;
     }
 }
 
-void ConvCmGpu::perform_convolution_gpu(float *output_data, const float *input_data, const float *weight_data,
-                                        const int num_samples, const int output_channel, const int input_channel,
-                                        const int height_in, const int width_in, const int kernel_height)
+void ConvCmGpu::perform_convolution_gpu(float *output, const float *input, const float *filter,
+                                        const int num_samples, const int num_output_channels, const int num_input_channels,
+                                        const int input_height, const int input_width, const int filter_size)
 {
-    const int height_out = height_in - kernel_height + 1;
-    const int width_out = width_in - kernel_height + 1;
+    const int output_height = input_height - filter_size + 1;
+    const int output_width = input_width - filter_size + 1;
 
     // Allocate device memory
     float *device_input, *device_output;
-    CHECK(cudaMalloc((void **)&device_input, num_samples * input_channel * height_in * width_in * sizeof(float)));
-    CHECK(cudaMalloc((void **)&device_output, num_samples * output_channel * height_out * width_out * sizeof(float)));
+    CHECK(cudaMalloc((void **)&device_input, num_samples * num_input_channels * input_height * input_width * sizeof(float)));
+    CHECK(cudaMalloc((void **)&device_output, num_samples * num_output_channels * output_height * output_width * sizeof(float)));
 
-    // Copy input and mask data to device
-    CHECK(cudaMemcpy(device_input, input_data, num_samples * input_channel * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpyToSymbol(dc_filter, weight_data, output_channel * input_channel * kernel_height * kernel_height * sizeof(float)));
+    // Copy input and filter data to device
+    CHECK(cudaMemcpy(device_input, input, num_samples * num_input_channels * input_height * input_width * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpyToSymbol(dc_filter, filter, num_output_channels * num_input_channels * filter_size * filter_size * sizeof(float)));
 
     // Set the kernel dimensions and call the kernel
-    int Z = ceil(1.0 * height_out / TILE_WIDTH) * ceil(1.0 * width_out / TILE_WIDTH);
+    int Z = ceil(1.0 * output_height / TILE_WIDTH) * ceil(1.0 * output_width / TILE_WIDTH);
     dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, 1);
-    dim3 num_blocks_in_grid(num_samples, output_channel, Z);
+    dim3 num_blocks_in_grid(num_samples, num_output_channels, Z);
 
     // Launch the kernel
     GpuTimer timer;
     timer.Start();
-    cm_convolution_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
+    convolution_gpu_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, num_samples, num_output_channels, num_input_channels, input_height, input_width, filter_size);
     timer.Stop();
     std::cout << "\t- Kernel time: " << timer.Elapsed() << " ms" << std::endl;
 
     // Copy the output back to host
-    CHECK(cudaMemcpy(output_data, device_output, num_samples * output_channel * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost));
+    CHECK(cudaMemcpy(output, device_output, num_samples * num_output_channels * output_height * output_width * sizeof(float), cudaMemcpyDeviceToHost));
 
     // Free device memory
     CHECK(cudaFree(device_input));
