@@ -54,11 +54,11 @@ void Conv::im2col(const Vector &image, Matrix &data_col)
 
 void Conv::forward(const Matrix &bottom)
 {
+  GpuTimer timer;
+  timer.Start();
   int n_sample = bottom.cols();
   top.resize(height_out * width_out * channel_out, n_sample);
   data_cols.resize(n_sample);
-  GpuTimer timer;
-  timer.Start();
   for (int i = 0; i < n_sample; i++)
   {
     // im2col
