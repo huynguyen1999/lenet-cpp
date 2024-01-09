@@ -19,11 +19,11 @@
 #include "./optimizer.h"
 #include "./optimizer/sgd.h"
 
-Network DnnNetwork(int type)
+Network DnnNetwork(int cnn_version)
 {
     Network dnn2;
     Layer *conv1, *conv2;
-    switch (type)
+    switch (cnn_version)
     {
     case 0:
         conv1 = new Conv(1, 28, 28, 6, 5, 5);
