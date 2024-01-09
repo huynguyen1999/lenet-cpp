@@ -67,9 +67,10 @@ int main()
 	// SGD opt(0.001);
 	const int n_epoch = 5;
 	const int batch_size = 128;
+	int best_acc = 0;
 	for (int epoch = 0; epoch < n_epoch; epoch++)
 	{
-		dnn.save_weights("../weights/fashion_weights.bin");
+
 		shuffle_data(dataset.train_data, dataset.train_labels);
 		for (int start_idx = 0; start_idx < n_train; start_idx += batch_size)
 		{
@@ -101,7 +102,11 @@ int main()
 		std::cout << std::endl;
 		std::cout << epoch + 1 << "-th epoch, test acc: " << acc << std::endl;
 		std::cout << std::endl;
+		if (acc > best_acc)
+		{
+			dnn.save_weights("../weights/fashion_weights.bin");
+			best_acc = acc;
+		}
 	}
-	dnn.save_weights("../weights/fashion_weights.bin");
 	return 0;
 }
