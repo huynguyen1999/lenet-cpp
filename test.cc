@@ -65,9 +65,11 @@ int main(int argc, char *argv[])
     std::cout << "mnist test number: " << dataset.test_labels.cols() << std::endl;
     Network dnn = DnnNetwork(cnn_version);
     float accuracy = 0.0;
+    dnn.load_weights("../weights/fashion_weights.bin");
+    dnn.forward(dataset.test_data);
     std::cout << "==============================" << std::endl;
     accuracy = compute_accuracy(dnn.output(), dataset.test_labels);
-    std::cout << "test accuracy: " << accuracy << std::endl;
+    std::cout << "Test accuracy: " << accuracy << std::endl;
 
     return 0;
 }
