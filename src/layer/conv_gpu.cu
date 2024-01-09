@@ -100,9 +100,9 @@ __global__ void kernel(float *output, const float *input, const float *kernel,
     }
 }
 
-void ConvGpu::conv_forward_gpu_full(float *output_data, const float *input_data, const float *weight_data,
-                                    const int num_samples, const int output_channel, const int input_channel,
-                                    const int height_in, const int width_in, const int kernel_height)
+void ConvGpu::conv_forward_gpu(float *output_data, const float *input_data, const float *weight_data,
+                               const int num_samples, const int output_channel, const int input_channel,
+                               const int height_in, const int width_in, const int kernel_height)
 {
     std::cout << ". Not Optimize:\n";
     const int height_out = height_in - kernel_height + 1;
@@ -126,7 +126,7 @@ void ConvGpu::conv_forward_gpu_full(float *output_data, const float *input_data,
     // Launch the kernel
     GpuTimer time_kernel;
     time_kernel.Start();
-    conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, device_weight, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
+    kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, device_weight, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
     time_kernel.Stop();
     float time_kernel_ms = time_kernel.Elapsed();
     std::cout << "\t - Kernel Time: " << time_kernel_ms << " ms" << std::endl;
