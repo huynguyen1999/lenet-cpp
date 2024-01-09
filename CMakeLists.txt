@@ -13,6 +13,8 @@ add_subdirectory(src)
 # 指定生成目标 
 
 cuda_add_executable(train train.cc)
+cuda_add_executable(test test.cc)
 # 添加链接库
 target_link_libraries(train MiniDNNLib)
+target_link_libraries(test MiniDNNLib)
 
