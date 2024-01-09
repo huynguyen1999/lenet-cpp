@@ -8,6 +8,8 @@
 #define MAX_WEIGHT_SIZE 1600
 
 __constant__ float const_weights[MAX_WEIGHT_SIZE];
+__global__ void conv(float *image, float *result, int height_in, int width_in, int height_kernel, int width_kernel,
+                     int height_out, int width_out, int channel_in, int channel_out, int stride, int pad_w, int pad_h);
 
 void ConvGpu::init()
 {
