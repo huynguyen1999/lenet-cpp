@@ -2,21 +2,21 @@
 #include <algorithm>
 #include <iostream>
 #include <cstdlib>
-#include "src/layer/conv.h"
-#include "src/layer.h"
-#include "src/layer/fully_connected.h"
-#include "src/layer/ave_pooling.h"
-#include "src/layer/max_pooling.h"
-#include "src/layer/relu.h"
-#include "src/layer/sigmoid.h"
-#include "src/layer/softmax.h"
-#include "src/loss.h"
-#include "src/loss/mse_loss.h"
-#include "src/loss/cross_entropy_loss.h"
-#include "src/mnist.h"
-#include "src/network.h"
-#include "src/optimizer.h"
-#include "src/optimizer/sgd.h"
+#include "./layer/conv.h"
+#include "./layer.h"
+#include "./layer/fully_connected.h"
+#include "./layer/ave_pooling.h"
+#include "./layer/max_pooling.h"
+#include "./layer/relu.h"
+#include "./layer/sigmoid.h"
+#include "./layer/softmax.h"
+#include "./loss.h"
+#include "./loss/mse_loss.h"
+#include "./loss/cross_entropy_loss.h"
+#include "./mnist.h"
+#include "./network.h"
+#include "./optimizer.h"
+#include "./optimizer/sgd.h"
 
 Network CpuDnnNetwork()
 {
