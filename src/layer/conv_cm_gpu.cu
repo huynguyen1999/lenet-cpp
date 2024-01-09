@@ -20,7 +20,7 @@ void ConvCmGpu::init()
     set_normal_random(bias.data(), bias.size(), 0, 0.01);
 }
 
-__global__ void convolution_kernel(float *output, const float *input, const int num_samples,
+__global__ void cm_convolution_kernel(float *output, const float *input, const int num_samples,
                                    const int output_channel, const int input_channel,
                                    const int height, const int width, const int kernel_size)
 {
@@ -88,7 +88,7 @@ void ConvCmGpu::perform_convolution_gpu(float *output_data, const float *input_d
     // Launch the kernel
     GpuTimer timer;
     timer.Start();
-    convolution_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
+    cm_convolution_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
     timer.Stop();
     std::cout << "\tKernel Time: " << timer.Elapsed() << " ms" << std::endl;
 
