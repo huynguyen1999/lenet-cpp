@@ -4,6 +4,9 @@
 #include <chrono>
 #include <vector>
 
+#define MAX_WEIGHT_SIZE 1600
+__constant__ float const_weights[MAX_WEIGHT_SIZE];
+
 void ConvGpu::init()
 {
     height_out = (1 + (height_in - height_kernel + 2 * pad_h) / stride);
