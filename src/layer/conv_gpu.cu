@@ -63,7 +63,7 @@ __global__ void convolution_kernel(float *result, const float *input_data, const
     }
 }
 
-void ConvolutionGPU::perform_convolution_gpu(float *output, const float *input, const float *filter,
+void ConvGpu::perform_convolution_gpu(float *output, const float *input, const float *filter,
                                              const int num_samples, const int num_output_channels, const int num_input_channels,
                                              const int input_height, const int input_width, const int filter_size)
 {
