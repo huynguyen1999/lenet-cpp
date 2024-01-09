@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "../layer.h"
+#include "../gpu_utils.h"
 #include <math.h>
 #include <iostream>
 #include <chrono>
