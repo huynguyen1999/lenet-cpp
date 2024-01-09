@@ -41,8 +41,8 @@ int main()
     // accuracy = compute_accuracy(dnn1.output(), dataset.test_labels);
     // std::cout << "test accuracy: " << accuracy << std::endl;
     // std::cout << "==============================" << std::endl;
-
     // 3. Device - GPU Network
+    std::cout << "Test: Host - GPU Network" << std::endl;
     Network dnn2 = GpuDnnNetwork();
     dnn2.load_weights("../weights/fashion_weights.bin");
     dnn2.forward(dataset.test_data);
