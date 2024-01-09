@@ -64,8 +64,8 @@ __global__ void convolution_kernel(float *result, const float *input_data, const
 }
 
 void ConvGpu::perform_convolution_gpu(float *output, const float *input, const float *filter,
-                                             const int num_samples, const int num_output_channels, const int num_input_channels,
-                                             const int input_height, const int input_width, const int filter_size)
+                                      const int num_samples, const int num_output_channels, const int num_input_channels,
+                                      const int input_height, const int input_width, const int filter_size)
 {
     const int output_height = input_height - filter_size + 1;
     const int output_width = input_width - filter_size + 1;
@@ -112,9 +112,9 @@ void ConvGpu::forward(const Matrix &bottom)
     const int output_channel = channel_out;
     const int kernel_height = height_kernel; // Assuming width_kernel is also K
 
-    conv_forward_gpu(output_data, input_data, weight_data,
-                     num_samples, output_channel, input_channel,
-                     height_in, width_in, kernel_height);
+    perform_convolution_gpu(output_data, input_data, weight_data,
+                            num_samples, output_channel, input_channel,
+                            height_in, width_in, kernel_height);
 
     // Stop layer timer
     timer.Stop();
