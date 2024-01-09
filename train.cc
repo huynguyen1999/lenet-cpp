@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iostream>
 
+#include "src/dnn_network.h"
 #include "src/layer.h"
 #include "src/layer/conv.h"
 #include "src/layer/fully_connected.h"
