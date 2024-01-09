@@ -48,7 +48,9 @@ public:
     }
 
     void forward(const Matrix &bottom);
-    void backward(const Matrix &bottom, const Matrix &grad_top);
+    void conv_forward_gpu_full(float *host_y, const float *host_x, const float *host_k,
+                               const int B, const int M, const int C,
+                               const int H, const int W, const int K) void backward(const Matrix &bottom, const Matrix &grad_top);
     void update(Optimizer &opt);
     void im2col(const Vector &image, Matrix &data_col);
     void col2im(const Matrix &data_col, Vector &image);

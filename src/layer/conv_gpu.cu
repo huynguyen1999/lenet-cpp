@@ -4,12 +4,7 @@
 #include <typeinfo>
 #include <assert.h>
 
-// Largest weights are shape (5 * 5 * 4, 16)
-#define MAX_WEIGHT_SIZE 1600
-
-__constant__ float const_weights[MAX_WEIGHT_SIZE];
-__global__ void conv(float *image, float *result, int height_in, int width_in, int height_kernel, int width_kernel,
-                     int height_out, int width_out, int channel_in, int channel_out, int stride, int pad_w, int pad_h);
+#define TILE_WIDTH 16
 
 void ConvGpu::init()
 {
@@ -61,123 +56,117 @@ void ConvGpu::im2col(const Vector &image, Matrix &data_col)
     }
 }
 
-void ConvGpu::forward(const Matrix &bottom)
+__global__ void kernel(float *output, const float *input, const float *kernel,
+                       const int num_samples, const int output_channel, const int input_channel,
+                       const int height, const int width, const int kernel_size)
 {
-    int n_sample = bottom.cols();
-    top.resize(height_out * width_out * channel_out, n_sample);
-    data_cols.resize(n_sample);
-    for (int i = 0; i < n_sample; i++)
+    const int height_out = height - kernel_size + 1;
+    const int width_out = width - kernel_size + 1;
+
+    int width_grid = ceil(1.0 * width_out / TILE_WIDTH);
+
+    int batch_idx = blockIdx.x;                                         // batch number
+    int output_feature_idx = blockIdx.y;                                // output feature
+    int row_idx = (blockIdx.z / width_grid) * TILE_WIDTH + threadIdx.y; // row of the image matrix
+    int col_idx = (blockIdx.z % width_grid) * TILE_WIDTH + threadIdx.x; // col of the image matrix
+
+    float accumulator = 0.0f;
+
+    if (row_idx < height_out && col_idx < width_out)
     {
-
-        float *d_image;
-        float *d_results;
-
-        size_t size_image = sizeof(float) * height_in * width_in * channel_in;
-        size_t size_result = sizeof(float) * height_out * width_out * channel_out;
-        size_t size_weight = sizeof(float) * channel_in * height_kernel * width_kernel * channel_out;
-
-        CHECK(cudaMalloc((void **)&d_image, size_image));
-        CHECK(cudaMalloc((void **)&d_results, size_result));
-
-        // Access only the current sample using column-major indexing
-        int image_idx = i * height_in * width_in * channel_in;
-
-        // Copy the image data
-        CHECK(cudaMemcpy(d_image, &bottom.data()[image_idx], size_image, cudaMemcpyHostToDevice));
-        // Copy the weight data
-        CHECK(cudaMemcpyToSymbol(const_weights, weight.data(), size_weight));
-
-        // Define more X threads as there are usually more pixels
-        // than there are channels out
-        int num_threadsX = 256;
-        int num_threadY = 4;
-
-        // Use float to prevent int division
-        float hw_out = height_out * width_out;
-
-        int dimGridSizeX = ceil(hw_out / num_threadsX);
-        int dimGridSizeY = ceil(channel_out / num_threadY);
-
-        dim3 DimGrid(dimGridSizeX, dimGridSizeY, 1);
-        dim3 DimBlock(num_threadsX, num_threadY, 1);
-        // Launch Kernel Using Defined dimensions
-        conv<<<DimGrid, DimBlock>>>(d_image, d_results, height_in, width_in, height_kernel,
-                                    width_kernel, height_out, width_out, channel_in, channel_out, stride, pad_w, pad_h);
-        // Ensure Kernel executed sucessfully
-        CHECK(cudaGetLastError());
-
-        // Copy the result over to a host array
-        float result[height_out * width_out * channel_out];
-        cudaMemcpy(result, d_results, size_result, cudaMemcpyDeviceToHost);
-        // Create an Eigen::Matrix and convert the 1D array to 2D
-        Matrix output = Eigen::Map<Matrix>(result, height_out * width_out, channel_out);
-        // Add bias
-        output.rowwise() += bias.transpose();
-
-        // Flatten the output
-        top.col(i) = Eigen::Map<Vector>(output.data(), output.size());
-
-        // Free Cuda Memory
-        CHECK(cudaFree(d_image));
-        CHECK(cudaFree(d_results));
-        // Check for any Cuda Errrors
-        CHECK(cudaGetLastError());
+        for (int input_channel_idx = 0; input_channel_idx < input_channel; input_channel_idx++) // sum over all input features
+        {
+            for (int kernel_row = 0; kernel_row < kernel_size; kernel_row++) // kernel_size x kernel_size filter
+            {
+                for (int kernel_col = 0; kernel_col < kernel_size; kernel_col++)
+                {
+                    int input_row = row_idx + kernel_row;
+                    int input_col = col_idx + kernel_col;
+                    accumulator += input[(batch_idx * (input_channel * height * width)) +
+                                         (input_channel_idx * (height * width)) +
+                                         (input_row * width) +
+                                         input_col] *
+                                   kernel[(output_feature_idx * (input_channel * kernel_size * kernel_size)) +
+                                          (input_channel_idx * (kernel_size * kernel_size)) +
+                                          (kernel_row * kernel_size) +
+                                          kernel_col];
+                }
+            }
+        }
+        output[(batch_idx * (output_channel * height_out * width_out)) +
+               (output_feature_idx * (height_out * width_out)) +
+               (row_idx * width_out) +
+               col_idx] = accumulator;
     }
 }
 
-__global__ void conv(float *image, float *result, int height_in, int width_in, int height_kernel, int width_kernel,
-                     int height_out, int width_out, int channel_in, int channel_out, int stride, int pad_w, int pad_h)
+void ConvGpu::conv_forward_gpu_full(float *output_data, const float *input_data, const float *weight_data,
+                                    const int num_samples, const int output_channel, const int input_channel,
+                                    const int height_in, const int width_in, const int kernel_height)
 {
-    /**
-     * Function responsible for performing GPU Convolution on the provided image, using the kernel stored in constant
-     * memory, and story the result in the result array. **Note all data is stored Column-Major**
-     */
+    std::cout << ". Not Optimize:\n";
+    const int height_out = height_in - kernel_height + 1;
+    const int width_out = width_in - kernel_height + 1;
 
-    // Define
-    int hw_in = height_in * width_in;
-    int hw_kernel = height_kernel * width_kernel;
-    int hw_out = height_out * width_out;
+    // Allocate device memory
+    float *device_input, *device_output, *device_weight;
+    cudaMalloc((void **)&device_input, num_samples * input_channel * height_in * width_in * sizeof(float));              // input features map is input_channel
+    cudaMalloc((void **)&device_output, num_samples * output_channel * height_out * width_out * sizeof(float));          // output feature map is output_channel
+    cudaMalloc((void **)&device_weight, output_channel * input_channel * kernel_height * kernel_height * sizeof(float)); // input_channel * output_channel filter Maps of size kernel_height * kernel_height
 
-    // Define the pixel being operated on from the input image
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    // Define the index of the channel out being written to
-    int c_out = blockIdx.y * blockDim.y + threadIdx.y;
+    // Copy input and mask data to device
+    cudaMemcpy(device_input, input_data, num_samples * input_channel * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(device_weight, weight_data, output_channel * input_channel * kernel_height * kernel_height * sizeof(float), cudaMemcpyHostToDevice);
 
-    if (i < hw_out && c_out < channel_out)
-    {
-        // create temp var to store intermediate values
-        float temp = 0;
-        for (int c = 0; c < channel_in; c++)
-        {
-            // Get the image for the current channel
-            float *map = &(image[hw_in * c]);
-            int step_h = i / width_out;
-            int step_w = i % width_out;
-            int start_idx = step_h * width_in * stride + step_w * stride; // left-top idx of window
-            for (int j = 0; j < hw_kernel; j++)
-            {
-                int cur_col = start_idx % width_in + j % width_kernel - pad_w; // col after padding
-                int cur_row = start_idx / width_in + j / width_kernel - pad_h;
-                float pixel_value;
-                if (cur_col < 0 || cur_col >= width_in || cur_row < 0 ||
-                    cur_row >= height_in)
-                {
-                    pixel_value = 0;
-                }
-                else
-                {
-                    // Get column-major index
-                    int pick_idx = cur_row * width_in + cur_col;
-                    pixel_value = map[pick_idx];
-                }
-                // Get column-major index
-                int weight_idx = hw_kernel * channel_in * c_out + (c * hw_kernel + j);
-                temp += pixel_value * const_weights[weight_idx];
-            }
-        }
-        // Write out column-major
-        result[hw_out * c_out + i] = temp;
-    }
+    // Set the kernel dimensions and call the kernel
+    int Z = ceil(1.0 * height_out / TILE_WIDTH) * ceil(1.0 * width_out / TILE_WIDTH);
+    dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, 1);
+    dim3 num_blocks_in_grid(num_samples, output_channel, Z);
+
+    // Launch the kernel
+    GpuTimer time_kernel;
+    time_kernel.Start();
+    conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, device_weight, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
+    time_kernel.Stop();
+    float time_kernel_ms = time_kernel.Elapsed();
+    std::cout << "\t - Kernel Time: " << time_kernel_ms << " ms" << std::endl;
+    // Copy the output back to host
+    cudaMemcpy(output_data, device_output, num_samples * output_channel * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost);
+
+    // Free device memory
+    cudaFree(device_input);
+    cudaFree(device_output);
+    cudaFree(device_weight);
+}
+
+void ConvGpu::forward(const Matrix &bottom)
+{
+    GpuTimer timer;
+    timer.Start();
+
+    int n_sample = bottom.cols();
+    top.resize(height_out * width_out * channel_out, n_sample);
+    float *input_data = (float *)bottom.data();
+    float *output_data = (float *)top.data();
+    float *weight_data = (float *)weight.data();
+
+    const int num_samples = n_sample;
+    const int input_channel = channel_in;
+    const int output_channel = channel_out;
+    const int kernel_height = height_kernel; // Assuming width_kernel is also K
+
+    conv_forward_gpu(output_data, input_data, weight_data,
+                     num_samples, output_channel, input_channel,
+                     height_in, width_in, kernel_height);
+
+    // Stop layer timer
+    timer.Stop();
+    float duration_layer = timer.Elapsed();
+
+    // Launch barrier kernel to aid with timing with nsight-compute
+    // gpuInterface.insert_post_barrier_kernel();
+
+    std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
 }
 
 // col2im, used for grad_bottom
