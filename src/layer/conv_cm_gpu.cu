@@ -88,7 +88,7 @@ void ConvCmGpu::perform_convolution_gpu(float *output, const float *input, const
     // Launch the kernel
     GpuTimer timer;
     timer.Start();
-    convolution_gpu_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, num_samples, num_output_channels, num_input_channels, input_height, input_width, filter_size);
+    cm_convolution_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, num_samples, num_output_channels, num_input_channels, input_height, input_width, filter_size);
     timer.Stop();
     std::cout << "\t- Kernel time: " << timer.Elapsed() << " ms" << std::endl;
 
