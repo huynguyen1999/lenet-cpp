@@ -17,7 +17,7 @@
 #include "src/network.h"
 #include "src/optimizer.h"
 #include "src/optimizer/sgd.h"
-#include "dnn_network.h"
+#include "src/dnn_network.h"
 
 int main()
 {
