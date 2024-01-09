@@ -117,7 +117,7 @@ void ConvSmGpu::perform_convolution_gpu(float *output_data, const float *input_d
     // Launch kernel
     GpuTimer timer;
     timer.Start();
-    conv_forward_kernel<<<numBlocksInGrid, numThreadsPerBlock, shmem_size>>>(device_output, device_input, device_weight, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
+    convolution_kernel<<<numBlocksInGrid, numThreadsPerBlock, shmem_size>>>(device_output, device_input, device_weight, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
     timer.Stop();
     std::cout << "\tKernel Time: " << timer.Elapsed() << " ms" << std::endl;
 
