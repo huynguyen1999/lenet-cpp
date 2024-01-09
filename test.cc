@@ -34,17 +34,17 @@ int main()
     std::cout << "==============================" << std::endl;
 
     // 2. Host - CPU Network
-    std::cout << "Test: Host - CPU Network" << std::endl;
-    Network dnn1 = CpuDnnNetwork();
-    dnn1.load_weights("../weights/fashion_weights.bin");
-    dnn1.forward(dataset.test_data);
-    accuracy = compute_accuracy(dnn1.output(), dataset.test_labels);
-    std::cout << "test accuracy: " << accuracy << std::endl;
-    std::cout << "==============================" << std::endl;
+    // std::cout << "Test: Host - CPU Network" << std::endl;
+    // Network dnn1 = CpuDnnNetwork();
+    // dnn1.load_weights("../weights/fashion_weights.bin");
+    // dnn1.forward(dataset.test_data);
+    // accuracy = compute_accuracy(dnn1.output(), dataset.test_labels);
+    // std::cout << "test accuracy: " << accuracy << std::endl;
+    // std::cout << "==============================" << std::endl;
 
     // 3. Device - GPU Network
     Network dnn2 = GpuDnnNetwork();
-    dnn2.load_weights("./weights/fashion_weights.bin.bin");
+    dnn2.load_weights("../weights/fashion_weights.bin.bin");
     dnn2.forward(dataset.test_data);
     accuracy = compute_accuracy(dnn2.output(), dataset.test_labels);
     std::cout << "test accuracy: " << accuracy << std::endl;
