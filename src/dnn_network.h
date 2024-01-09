@@ -24,6 +24,7 @@
 Network DnnNetwork(int cnn_version)
 {
     Network dnn2;
+    // create conv based on cnn version
     Layer *conv1, *conv2;
     switch (cnn_version)
     {
