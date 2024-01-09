@@ -21,8 +21,8 @@ void ConvCmGpu::init()
 }
 
 __global__ void cm_convolution_kernel(float *output, const float *input, const int num_samples,
-                                   const int output_channel, const int input_channel,
-                                   const int height, const int width, const int kernel_size)
+                                      const int output_channel, const int input_channel,
+                                      const int height, const int width, const int kernel_size)
 {
     const int height_out = height - kernel_size + 1;
     const int width_out = width - kernel_size + 1;
@@ -90,7 +90,7 @@ void ConvCmGpu::perform_convolution_gpu(float *output_data, const float *input_d
     timer.Start();
     cm_convolution_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
     timer.Stop();
-    std::cout << "\tKernel Time: " << timer.Elapsed() << " ms" << std::endl;
+    std::cout << "\t- Layer has kernel time: " << timer.Elapsed() << " ms" << std::endl;
 
     // Copy the output back to host
     CHECK(cudaMemcpy(output_data, device_output, num_samples * output_channel * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost));
@@ -122,9 +122,7 @@ void ConvCmGpu::forward(const Matrix &bottom)
 
     // Stop layer timer
     timer.Stop();
-    float duration_layer = timer.Elapsed();
-
-    std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
+    std::cout << "\t- Total layer time: " << timer.Elapsed() << " ms" << std::endl;
 }
 
 void ConvCmGpu::im2col(const Vector &image, Matrix &data_col)

@@ -21,8 +21,8 @@ void ConvSmGpu::init()
 }
 
 __global__ void sm_convolution_kernel(float *output, const float *input, const float *kernel,
-                                   const int num_samples, const int output_channel, const int input_channel,
-                                   const int height, const int width, const int kernel_size)
+                                      const int num_samples, const int output_channel, const int input_channel,
+                                      const int height, const int width, const int kernel_size)
 {
     int TILE_WIDTH_SHARED;
     if (input_channel == 1)
@@ -80,8 +80,8 @@ __global__ void sm_convolution_kernel(float *output, const float *input, const f
 }
 
 void ConvSmGpu::perform_convolution_gpu(float *output_data, const float *input_data, const float *weight_data,
-                                                 const int num_samples, const int output_channel, const int input_channel,
-                                                 const int height_in, const int width_in, const int kernel_height)
+                                        const int num_samples, const int output_channel, const int input_channel,
+                                        const int height_in, const int width_in, const int kernel_height)
 {
     int TILE_WIDTH_SHARED;
     if (input_channel == 1)
@@ -119,7 +119,7 @@ void ConvSmGpu::perform_convolution_gpu(float *output_data, const float *input_d
     timer.Start();
     sm_convolution_kernel<<<numBlocksInGrid, numThreadsPerBlock, shmem_size>>>(device_output, device_input, device_weight, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
     timer.Stop();
-    std::cout << "\tKernel Time: " << timer.Elapsed() << " ms" << std::endl;
+    std::cout << "\t- Layer has kernel time: " << timer.Elapsed() << " ms" << std::endl;
 
     CHECK(cudaMemcpy(output_data, device_output, outputSize, cudaMemcpyDeviceToHost));
 
@@ -150,9 +150,7 @@ void ConvSmGpu::forward(const Matrix &bottom)
 
     // Stop layer timer
     timer.Stop();
-    float duration_layer = timer.Elapsed();
-
-    std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
+    std::cout << "\t- Total layer time: " << timer.Elapsed() << " ms" << std::endl;
 }
 
 void ConvSmGpu::im2col(const Vector &image, Matrix &data_col)

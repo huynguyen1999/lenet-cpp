@@ -90,8 +90,8 @@ void ConvGpu::perform_convolution_gpu(float *output, const float *input, const f
     timer.Start();
     convolution_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, device_filter, num_samples, num_output_channels, num_input_channels, input_height, input_width, filter_size);
     timer.Stop();
-    std::cout << "\tKernel Time: " << timer.Elapsed() << " ms" << std::endl;
-    
+    std::cout << "\t- Layer has kernel time: " << timer.Elapsed() << " ms" << std::endl;
+
     // Copy the output back to the host
     CHECK(cudaMemcpy(output, device_output, num_samples * num_output_channels * output_height * output_width * sizeof(float), cudaMemcpyDeviceToHost));
 
@@ -123,9 +123,7 @@ void ConvGpu::forward(const Matrix &bottom)
 
     // Stop layer timer
     timer.Stop();
-    float duration_layer = timer.Elapsed();
-
-    std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
+    std::cout << "\t- Total layer time: " << timer.Elapsed() << " ms" << std::endl;
 }
 
 void ConvGpu::im2col(const Vector &image, Matrix &data_col)

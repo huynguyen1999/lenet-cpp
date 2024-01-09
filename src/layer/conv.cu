@@ -71,7 +71,7 @@ void Conv::forward(const Matrix &bottom)
     top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
   }
   timer.Stop();
-  std::cout << "\t - Layer Time: " << timer.Elapsed() << " ms" << std::endl;
+  std::cout << "\t- Total layer time: " << timer.Elapsed() << " ms" << std::endl;
 }
 
 void Conv::col2im(const Matrix &data_col, Vector &image)
