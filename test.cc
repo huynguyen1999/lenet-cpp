@@ -30,22 +30,22 @@ int main(int argc, char *argv[])
     // 0. Get CNN version
     const char *version = argv[1];
     int cnn_version = -1;
-    if (std::strcmp(cnn_version, "cpu") == 0)
+    if (std::strcmp(version, "cpu") == 0)
     {
         cnn_version = 0;
         std::cout << "Selected CNN Type: CPU" << std::endl;
     }
-    else if (std::strcmp(cnn_version, "gpu") == 0)
+    else if (std::strcmp(version, "gpu") == 0)
     {
         cnn_version = 1;
         std::cout << "Selected CNN Type: Basic GPU" << std::endl;
     }
-    else if (std::strcmp(cnn_version, "optimize1") == 0)
+    else if (std::strcmp(version, "optimize1") == 0)
     {
         cnn_version = 2;
         std::cout << "Selected CNN Type: Optimized GPU With Shared Memory " << std::endl;
     }
-    else if (std::strcmp(cnn_version, "optimize2") == 0)
+    else if (std::strcmp(version, "optimize2") == 0)
     {
         cnn_version = 3;
         std::cout << "Selected CNN Type: Optimized GPU With Constant Memory" << std::endl;
