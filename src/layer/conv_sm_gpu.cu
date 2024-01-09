@@ -119,7 +119,7 @@ void ConvSmGpu::perform_convolution_gpu(float *output_data, const float *input_d
     timer.Start();
     sm_convolution_kernel<<<numBlocksInGrid, numThreadsPerBlock, shmem_size>>>(device_output, device_input, device_weight, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
     timer.Stop();
-    std::cout << "\t- Layer has kernel time: " << timer.Elapsed() << " ms" << std::endl;
+    std::cout << "\t- Kernel time: " << timer.Elapsed() << " ms" << std::endl;
 
     CHECK(cudaMemcpy(output_data, device_output, outputSize, cudaMemcpyDeviceToHost));
 
@@ -145,9 +145,9 @@ void ConvSmGpu::forward(const Matrix &bottom)
     const int kernel_height = height_kernel; // Assuming width_kernel is also K
 
     if (input_channel == 1)
-        std::cout << "Convolution c1 - GPU";
+        std::cout << "Convolution c1 - GPU" << std::endl;
     else
-        std::cout << "Convolution c3 - GPU";
+        std::cout << "Convolution c3 - GPU" << std::endl;
     perform_convolution_gpu(output_data, input_data, weight_data,
                             num_samples, output_channel, input_channel,
                             height_in, width_in, kernel_height);
