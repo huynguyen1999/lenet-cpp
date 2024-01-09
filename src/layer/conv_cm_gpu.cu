@@ -1,4 +1,4 @@
-#include "conv_gpu.h"
+#include "conv_cm_gpu.h"
 #include <math.h>
 #include <iostream>
 #include <typeinfo>
