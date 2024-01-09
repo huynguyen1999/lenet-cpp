@@ -125,7 +125,7 @@ void Network::check_gradient(const Matrix &input, const Matrix &target,
   this->set_parameters(param);
 }
 
-void Network::save_model(std::string filename)
+void Network::save_weights(std::string filename)
 {
   std::ofstream out(filename, std::ios::binary);
   if (!out)
@@ -145,7 +145,7 @@ void Network::save_model(std::string filename)
   }
 }
 
-void Network::load_model(std::string filename)
+void Network::load_weights(std::string filename)
 {
   std::ifstream in(filename, std::ios::binary);
   if (!in)
