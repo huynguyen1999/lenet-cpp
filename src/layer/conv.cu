@@ -59,6 +59,10 @@ void Conv::forward(const Matrix &bottom)
   int n_sample = bottom.cols();
   top.resize(height_out * width_out * channel_out, n_sample);
   data_cols.resize(n_sample);
+  if (input_channel == 1)
+    std::cout << "Convolution c1 - GPU";
+  else
+    std::cout << "Convolution c3 - GPU";
   for (int i = 0; i < n_sample; i++)
   {
     // im2col
