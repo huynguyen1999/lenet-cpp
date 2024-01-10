@@ -55,11 +55,4 @@ struct GpuTimer
 	}
 };
 
-class GpuUtils
-{
-public:
-	char *concatStr(const char *s1, const char *s2);
-	void showDeviceInformation();
-};
-
 #endif
