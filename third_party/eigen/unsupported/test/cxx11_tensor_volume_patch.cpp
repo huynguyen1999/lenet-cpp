@@ -4,8 +4,9 @@
 
 using Eigen::Tensor;
 
-static void test_single_voxel_patch() {
-  Tensor<float, 5> tensor(4, 2, 3, 5, 7);
+static void test_single_voxel_patch()
+{
+  Tensor<float, 5> tensor(4,2,3,5,7);
   tensor.setRandom();
   Tensor<float, 5, RowMajor> tensor_row_major = tensor.swap_layout();
 
@@ -34,7 +35,9 @@ static void test_single_voxel_patch() {
   }
 }
 
-static void test_entire_volume_patch() {
+
+static void test_entire_volume_patch()
+{
   const int depth = 4;
   const int patch_z = 2;
   const int patch_y = 3;
@@ -67,9 +70,9 @@ static void test_entire_volume_patch() {
   const int dy = patch_y - 1;
   const int dx = patch_x - 1;
 
-  const int forward_pad_z = dz / 2;
-  const int forward_pad_y = dy / 2;
-  const int forward_pad_x = dx / 2;
+  const int forward_pad_z = dz - dz / 2;
+  const int forward_pad_y = dy - dy / 2;
+  const int forward_pad_x = dx - dx / 2;
 
   for (int pz = 0; pz < patch_z; pz++) {
     for (int py = 0; py < patch_y; py++) {
@@ -85,7 +88,8 @@ static void test_entire_volume_patch() {
                   const int eff_z = z - forward_pad_z + pz;
                   const int eff_y = y - forward_pad_y + py;
                   const int eff_x = x - forward_pad_x + px;
-                  if (eff_z >= 0 && eff_y >= 0 && eff_x >= 0 && eff_z < patch_z && eff_y < patch_y && eff_x < patch_x) {
+                  if (eff_z >= 0 && eff_y >= 0 && eff_x >= 0 &&
+                      eff_z < patch_z && eff_y < patch_y && eff_x < patch_x) {
                     expected = tensor(d, eff_z, eff_y, eff_x, b);
                     expected_row_major = tensor_row_major(b, eff_x, eff_y, eff_z, d);
                   }
@@ -101,7 +105,8 @@ static void test_entire_volume_patch() {
   }
 }
 
-EIGEN_DECLARE_TEST(cxx11_tensor_volume_patch) {
+void test_cxx11_tensor_volume_patch()
+{
   CALL_SUBTEST(test_single_voxel_patch());
   CALL_SUBTEST(test_entire_volume_patch());
 }
