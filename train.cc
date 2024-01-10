@@ -37,7 +37,7 @@ int main()
 	// dnn
 	Network dnn = DnnNetwork(0);
 	// train & test
-	SGD opt(0.005, 5e-4, 0.9, true);
+	SGD opt(0.005, 5e-3, 0.9, true);
 	// SGD opt(0.001);
 	const int n_epoch = 5;
 	const int batch_size = 128;
