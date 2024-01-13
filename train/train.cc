@@ -64,7 +64,7 @@ int main()
 	// train & test
 	SGD opt(0.005, 5e-3, 0.9, true);
 	// SGD opt(0.001);
-	const int n_epoch = 5;
+	const int n_epoch = 7;
 	const int batch_size = 128;
 	int best_acc = 0;
 	for (int epoch = 0; epoch < n_epoch; epoch++)
