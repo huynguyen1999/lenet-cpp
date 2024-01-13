@@ -1,6 +1,0 @@
-/Users/admin/Source/School/ParallelProgramming/lenet-cpp/train/build/CMakeFiles/train.dir
-/Users/admin/Source/School/ParallelProgramming/lenet-cpp/train/build/CMakeFiles/edit_cache.dir
-/Users/admin/Source/School/ParallelProgramming/lenet-cpp/train/build/CMakeFiles/rebuild_cache.dir
-/Users/admin/Source/School/ParallelProgramming/lenet-cpp/train/build/src/CMakeFiles/MiniDNNLib.dir
-/Users/admin/Source/School/ParallelProgramming/lenet-cpp/train/build/src/CMakeFiles/edit_cache.dir
-/Users/admin/Source/School/ParallelProgramming/lenet-cpp/train/build/src/CMakeFiles/rebuild_cache.dir
