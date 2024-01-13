@@ -60,9 +60,9 @@ void Conv::forward(const Matrix &bottom)
   top.resize(height_out * width_out * channel_out, n_sample);
   data_cols.resize(n_sample);
   if (channel_in == 1)
-    std::cout << "Convolution c1 - CPU" << std::endl;
+    std::cout << "Convolution 1 - CPU" << std::endl;
   else
-    std::cout << "Convolution c3 - CPU" << std::endl;
+    std::cout << "Convolution 3 - CPU" << std::endl;
 
   for (int i = 0; i < n_sample; i++)
   {

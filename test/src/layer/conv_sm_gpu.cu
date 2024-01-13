@@ -147,9 +147,9 @@ void ConvSmGpu::forward(const Matrix &bottom)
     const int kernel_height = height_kernel; // Assuming width_kernel is also K
 
     if (input_channel == 1)
-        std::cout << "Convolution c1 - GPU" << std::endl;
+        std::cout << "Convolution 1 - GPU" << std::endl;
     else
-        std::cout << "Convolution c3 - GPU" << std::endl;
+        std::cout << "Convolution 3 - GPU" << std::endl;
     perform_convolution_gpu(output_data, input_data, weight_data,
                             num_samples, output_channel, input_channel,
                             height_in, width_in, kernel_height);
